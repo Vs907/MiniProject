@@ -28,8 +28,8 @@ public class CartDAOImpl implements CartDAO {
 	@Override
 	public int addToCart(CartModel cartModel) {
 		// TODO Auto-generated method stub
-		final String query = " insert into cart(cartid,userid,productName,productId,quantity,price) values (?,?,?,?,?,?) ";
-		Object param[] = { cartModel.getCartid(), cartModel.getUserid(), cartModel.getProduct().getProductName(),
+		final String query = " insert into cart(cartid,productName,productId,quantity,price) values (?,?,?,?,?) ";
+		Object param[] = { cartModel.getCartid(), cartModel.getProduct().getProductName(),
 				cartModel.getProduct().getProductId(), cartModel.getProduct().getQuantity(),
 				cartModel.getProduct().getPrice() };
 		int result = 0;

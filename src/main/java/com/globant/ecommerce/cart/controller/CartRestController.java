@@ -98,7 +98,6 @@ public class CartRestController {
 			}
 
 			cartModel.setCartid(cartid);
-			cartModel.setUserid(userid);
 			cartModel.setProduct(product);
 			int res = facade.addToCart(cartModel);
 			if(res == 1) {
@@ -153,11 +152,13 @@ public class CartRestController {
 			if (result == 1)
 				return response;
 			else {
+				response.setData(null);
 				response.setMessage("Product cannot be deleted..");
 				response.setStatusCode("404");
 				return response;
 			}
 		} else {
+			
 			response.setMessage("User not logged in ");
 			response.setStatusCode("404");
 			return response;
@@ -212,26 +213,27 @@ public class CartRestController {
 	
 
 	public boolean authenticate(String authToken, String userid) {
-//
-//		String url = "http://192.168.43.163/checklogin";
-//		HttpHeaders headers = new HttpHeaders();
-//		headers.set("authToken", authToken);
-//		HttpEntity entity = new HttpEntity(headers);
-//		RestTemplate rst = new RestTemplate();
-//		ResponseEntity<String> resp = rst.exchange(url, HttpMethod.GET, entity, String.class);
-//		JSONObject jo = new JSONObject(resp.getBody());
-//		String statusCode = jo.getString("statusCode");
-//
-//		if (statusCode.equals("200")) {
-//			JSONObject json = jo.getJSONObject("data");
-//			int user_id = json.getInt("id");
-//			if (userid.equals(user_id + "")) {
-//				return true;
-//			} else
-//				return false;
-//		} else
-//			return false;
-		return true;
+
+		String url = "http://192.168.43.163/checklogin";
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("authToken", authToken);
+	
+		HttpEntity entity = new HttpEntity(headers);
+		RestTemplate rst = new RestTemplate();
+		ResponseEntity<String> resp = rst.exchange(url, HttpMethod.GET, entity, String.class);
+		JSONObject jo = new JSONObject(resp.getBody());
+		String statusCode = jo.getString("statusCode");
+		System.out.println(resp.getStatusCode());
+		if (statusCode.equals("200")) {
+			JSONObject json = jo.getJSONObject("data");
+			int user_id = json.getInt("id");
+			if (userid.equals(user_id + "")) {
+				return true;
+			} else
+				return false;
+		} else
+			return false;
+	
 	}
 
 }
