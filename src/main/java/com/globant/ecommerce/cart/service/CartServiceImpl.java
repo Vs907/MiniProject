@@ -26,7 +26,16 @@ public class CartServiceImpl implements CartService {
 	@Override
 	public int addToCart(CartModel cartmodel) {
 		// TODO Auto-generated method stub
-		return dao.addToCart(cartmodel);
+		Product  product = dao.findProductFromCart(cartmodel.getCartid(), cartmodel.getProduct().getProductId());
+		
+		if(product != null) {
+			System.out.println(product.getProductName());
+			return 0;
+		}
+		else {
+			
+			return dao.addToCart(cartmodel);
+		}
 	}
 
 	/**

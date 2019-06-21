@@ -39,7 +39,7 @@ public class CartRestController {
 	 * @param cartid
 	 * @return response
 	 */
-	@GetMapping("viewcart/{userid}")
+	@GetMapping("cart/{userid}")
 	public Response getAll(@PathVariable("userid") String userid,
 			@RequestHeader(value = "authToken", defaultValue = "") String authToken) {
 		Response response = new Response();
@@ -75,7 +75,7 @@ public class CartRestController {
 	 * @param product
 	 * @return response
 	 */
-	@PostMapping("/addtocart/{userid}")
+	@PostMapping("/cart/{userid}")
 	public Response addToCart(@PathVariable("userid") String userid,
 			@RequestHeader(value = "authToken", defaultValue = "") String authToken, @RequestBody Product product) {
 
@@ -100,7 +100,8 @@ public class CartRestController {
 			cartModel.setCartid(cartid);
 			cartModel.setUserid(userid);
 			cartModel.setProduct(product);
-			facade.addToCart(cartModel);
+			int res = facade.addToCart(cartModel);
+			if(res == 1) {
 			response.setMessage("Your Product added to cart Successfully");
 			response.setStatusCode("200");
 			DataModel data = new DataModel();
@@ -110,7 +111,11 @@ public class CartRestController {
 			productlist.add(product);
 			data.setProduct(productlist);
 			response.setData(data);
-
+			}
+			else {
+				response.setMessage("Product already added to cart");
+				response.setStatusCode("401");
+			}
 		} else {
 			response.setMessage("User Not Logged In");
 			response.setStatusCode("401");
@@ -128,7 +133,7 @@ public class CartRestController {
 	 * @return response
 	 */
 
-	@DeleteMapping("/deletefromcart/{cartid}/{productid}")
+	@DeleteMapping("/cart/{cartid}/{productid}")
 	public Response deleteFromCart(@RequestHeader(value = "authToken", defaultValue = "") String authToken,
 			@PathVariable("cartid") int cartid, @PathVariable("productid") int productid) {
 		Response response = new Response();
@@ -168,7 +173,7 @@ public class CartRestController {
 	 * @return
 	 */
 
-	@DeleteMapping("/emptycart/{cartid}")
+	@DeleteMapping("/cart/{cartid}")
 	public Response emptyCart(@PathVariable("cartid") int cartid,
 			@RequestHeader(value = "authToken", defaultValue = "") String authToken) {
 
@@ -207,25 +212,26 @@ public class CartRestController {
 	
 
 	public boolean authenticate(String authToken, String userid) {
-
-		String url = "http://192.168.43.163:8080/checklogin";
-		HttpHeaders headers = new HttpHeaders();
-		headers.set("authToken", authToken);
-		HttpEntity entity = new HttpEntity(headers);
-		RestTemplate rst = new RestTemplate();
-		ResponseEntity<String> resp = rst.exchange(url, HttpMethod.GET, entity, String.class);
-		JSONObject jo = new JSONObject(resp.getBody());
-		String statusCode = jo.getString("statusCode");
-
-		if (statusCode.equals("200")) {
-			JSONObject json = jo.getJSONObject("data");
-			int user_id = json.getInt("id");
-			if (userid.equals(user_id + "")) {
-				return true;
-			} else
-				return false;
-		} else
-			return false;
+//
+//		String url = "http://192.168.43.163/checklogin";
+//		HttpHeaders headers = new HttpHeaders();
+//		headers.set("authToken", authToken);
+//		HttpEntity entity = new HttpEntity(headers);
+//		RestTemplate rst = new RestTemplate();
+//		ResponseEntity<String> resp = rst.exchange(url, HttpMethod.GET, entity, String.class);
+//		JSONObject jo = new JSONObject(resp.getBody());
+//		String statusCode = jo.getString("statusCode");
+//
+//		if (statusCode.equals("200")) {
+//			JSONObject json = jo.getJSONObject("data");
+//			int user_id = json.getInt("id");
+//			if (userid.equals(user_id + "")) {
+//				return true;
+//			} else
+//				return false;
+//		} else
+//			return false;
+		return true;
 	}
 
 }
