@@ -56,6 +56,7 @@ public class CartDAOImpl implements CartDAO {
 			result = jdbcTemplate.update(query, param);
 		} catch (Exception e) {
 			// TODO: handle exception
+			result=0;
 		}
 		return result;
 	}
@@ -111,10 +112,9 @@ public class CartDAOImpl implements CartDAO {
 		Object param[] = { cartid };
 		int result = 0;
 		try {
-			result = jdbcTemplate.update(query, param);
-			System.out.println(result);
-			result = 1;
+			result =jdbcTemplate.update(query, param);	
 		} catch (Exception e) {
+			result=0;
 			// TODO: handle exception
 		}
 		return result;

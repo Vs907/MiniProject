@@ -29,7 +29,6 @@ public class CartServiceImpl implements CartService {
 		Product  product = dao.findProductFromCart(cartmodel.getCartid(), cartmodel.getProduct().getProductId());
 		
 		if(product != null) {
-			System.out.println(product.getProductName());
 			return 0;
 		}
 		else {

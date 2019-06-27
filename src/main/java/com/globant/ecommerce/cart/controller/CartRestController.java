@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import com.globant.ecommerce.cart.model.DataModel;
 import com.globant.ecommerce.cart.model.Product;
 import com.globant.ecommerce.cart.model.Response;
 import com.globant.ecommerce.cart.model.UserModel;
+
 /**
  * 
  * @author vivek.sachapara
@@ -39,33 +41,30 @@ public class CartRestController {
 	 * @param cartid
 	 * @return response
 	 */
+
 	@GetMapping("cart/{userid}")
-	public Response getAll(@PathVariable("userid") String userid,
+	public ResponseEntity<DataModel> getAllU(@PathVariable("userid") String userid,
 			@RequestHeader(value = "authToken", defaultValue = "") String authToken) {
-		Response response = new Response();
+		HttpHeaders headers = new HttpHeaders();
 		if (authenticate(authToken, userid)) {
 			DataModel datamodel = new DataModel();
 			int cartid = facade.getCartid(userid);
 			if (cartid == 0) {
-				response.setMessage("Cart Detailed Not Found");
-				response.setStatusCode("404");
-
+				headers.add("message", "Card Detailed Not Found");
+				return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
 			} else {
-
 				List<Product> productlist = facade.viewAllFromCart(cartid);
 				datamodel.setCartid(cartid);
 				datamodel.setUserid(userid);
 				datamodel.setProduct(productlist);
-				response.setMessage("Cart Detailed Fetched Successful");
-				response.setStatusCode("200");
-				response.setData(datamodel);
+				headers.add("message", "Cart Details");
+				return new ResponseEntity<>(datamodel, headers, HttpStatus.OK);
 			}
 
-		} else {
-			response.setMessage("User Not Logged In");
-			response.setStatusCode("401");
 		}
-		return response;
+		headers.add("Msg", "Not Authorised");
+		return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
+
 	}
 
 	/**
@@ -75,11 +74,13 @@ public class CartRestController {
 	 * @param product
 	 * @return response
 	 */
+
+
 	@PostMapping("/cart/{userid}")
-	public Response addToCart(@PathVariable("userid") String userid,
+	public ResponseEntity<DataModel> addToCart(@PathVariable("userid") String userid,
 			@RequestHeader(value = "authToken", defaultValue = "") String authToken, @RequestBody Product product) {
 
-		Response response = new Response();
+		HttpHeaders headers = new HttpHeaders();
 		if (authenticate(authToken, userid)) {
 			CartModel cartModel = new CartModel();
 			UserModel user = facade.getuser(userid);
@@ -100,28 +101,26 @@ public class CartRestController {
 			cartModel.setCartid(cartid);
 			cartModel.setProduct(product);
 			int res = facade.addToCart(cartModel);
-			if(res == 1) {
-			response.setMessage("Your Product added to cart Successfully");
-			response.setStatusCode("200");
-			DataModel data = new DataModel();
-			data.setCartid(cartid);
-			data.setUserid(userid);
-			List<Product> productlist = new ArrayList<Product>();
-			productlist.add(product);
-			data.setProduct(productlist);
-			response.setData(data);
-			}
-			else {
-				response.setMessage("Product already added to cart");
-				response.setStatusCode("401");
+			if (res == 1) {
+				DataModel data = new DataModel();
+				data.setCartid(cartid);
+				data.setUserid(userid);
+				List<Product> productlist = new ArrayList<Product>();
+				productlist.add(product);
+				data.setProduct(productlist);
+
+				headers.add("message", "Your Product added to cart Successfully");
+				return new ResponseEntity<DataModel>(data, headers, HttpStatus.OK);
+			} else {
+				headers.add("message", "Product already added to cart");
+				return new ResponseEntity<DataModel>(null, headers, HttpStatus.METHOD_NOT_ALLOWED);
+
 			}
 		} else {
-			response.setMessage("User Not Logged In");
-			response.setStatusCode("401");
-
+			headers.add("message", "User not logged in");
+			return new ResponseEntity<DataModel>(null, headers, HttpStatus.UNAUTHORIZED);
 		}
 
-		return response;
 	}
 
 	/**
@@ -131,14 +130,13 @@ public class CartRestController {
 	 * @param productid
 	 * @return response
 	 */
-
 	@DeleteMapping("/cart/{cartid}/{productid}")
-	public Response deleteFromCart(@RequestHeader(value = "authToken", defaultValue = "") String authToken,
-			@PathVariable("cartid") int cartid, @PathVariable("productid") int productid) {
-		Response response = new Response();
+	public ResponseEntity<DataModel> deleteFromCart(
+			@RequestHeader(value = "authToken", defaultValue = "") String authToken, @PathVariable("cartid") int cartid,
+			@PathVariable("productid") int productid) {
+		HttpHeaders headers = new HttpHeaders();
 		if (authenticate(authToken, facade.getUserid(cartid))) {
-			response.setMessage("Your Product deleted from cart successfully");
-			response.setStatusCode("200");
+
 			DataModel data = new DataModel();
 			data.setCartid(cartid);
 			data.setUserid(facade.getUserid(cartid));
@@ -147,21 +145,21 @@ public class CartRestController {
 			product = facade.findProductFromCart(cartid, productid);
 			productlist.add(product);
 			data.setProduct(productlist);
-			response.setData(data);
+
 			int result = facade.deleteFromCart(cartid, productid);
-			if (result == 1)
-				return response;
-			else {
-				response.setData(null);
-				response.setMessage("Product cannot be deleted..");
-				response.setStatusCode("404");
-				return response;
+			if (result == 1) {
+				headers.add("message", "Your Product deleted from cart successfully");
+				return new ResponseEntity<DataModel>(data, headers, HttpStatus.OK);
+			} else {
+
+				headers.add("message", "Product cannot be deleted..");
+				return new ResponseEntity<DataModel>(null, headers, HttpStatus.METHOD_NOT_ALLOWED);
+
 			}
 		} else {
-			
-			response.setMessage("User not logged in ");
-			response.setStatusCode("404");
-			return response;
+
+			headers.add("message", "User not logged in ");
+			return new ResponseEntity<DataModel>(null, headers, HttpStatus.UNAUTHORIZED);
 		}
 
 	}
@@ -175,65 +173,59 @@ public class CartRestController {
 	 */
 
 	@DeleteMapping("/cart/{cartid}")
-	public Response emptyCart(@PathVariable("cartid") int cartid,
+	public ResponseEntity<DataModel> emptyCart(@PathVariable("cartid") int cartid,
 			@RequestHeader(value = "authToken", defaultValue = "") String authToken) {
-
-		Response response = new Response();
+		HttpHeaders header = new HttpHeaders();
+		DataModel data = new DataModel();
 		if (authenticate(authToken, facade.getUserid(cartid))) {
-			response.setMessage("Your Product cart is empty");
-			response.setStatusCode("200");
-			DataModel data = new DataModel();
-			response.setData(data);
-			if (facade.emptyCart(cartid) == 1) {
-				return response;
+			int result = facade.emptyCart(cartid);
+			System.out.println(result);
+			if (result > 0) {
+				header.add("message", "Your Product cart is empty");
+				return new ResponseEntity<DataModel>(data, header, HttpStatus.OK);
 			} else {
-				response.setMessage("Your cart cannot be emptied");
-				response.setStatusCode("404");
-				return response;
+				header.add("message", "Your cart cannot be empties");
+				return new ResponseEntity<DataModel>(header, HttpStatus.NOT_ACCEPTABLE);
+
 			}
 		}
 
 		else {
-			response.setMessage("User not logged in ");
-			response.setStatusCode("404");
-			return response;
+			header.add("message", "User not logged in");
+			return new ResponseEntity<DataModel>(header, HttpStatus.UNAUTHORIZED);
 		}
-
 	}
-	
-	
-	
+
 	/**
 	 * 
 	 * @param authToken
 	 * @param userid
-	 * @return
-	 * Method to authenticate user and see if match by authToken	
+	 * @return Method to authenticate user and see if match by authToken
 	 */
-	
 
 	public boolean authenticate(String authToken, String userid) {
 
-		String url = "http://192.168.43.163/checklogin";
+		String url = "http://192.168.43.163:8080/checklogin";
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("authToken", authToken);
-	
+
 		HttpEntity entity = new HttpEntity(headers);
 		RestTemplate rst = new RestTemplate();
-		ResponseEntity<String> resp = rst.exchange(url, HttpMethod.GET, entity, String.class);
-		JSONObject jo = new JSONObject(resp.getBody());
-		String statusCode = jo.getString("statusCode");
-		System.out.println(resp.getStatusCode());
-		if (statusCode.equals("200")) {
-			JSONObject json = jo.getJSONObject("data");
-			int user_id = json.getInt("id");
-			if (userid.equals(user_id + "")) {
-				return true;
-			} else
-				return false;
-		} else
+		try {
+			ResponseEntity<String> resp = rst.exchange(url, HttpMethod.GET, entity, String.class);
+
+			if (resp.getStatusCodeValue() != 400) {
+				JSONObject jo = new JSONObject(resp.getBody());
+				int user_id = jo.getInt("id");
+				if (userid.equals(user_id + ""))
+					return true;
+			}
+		} catch (Exception e) {
 			return false;
-	
+			// TODO: handle exception
+		}
+		return false;
+
 	}
 
 }
